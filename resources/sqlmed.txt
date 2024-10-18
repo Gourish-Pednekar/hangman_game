@@ -1,0 +1,3 @@
+What is a primary key?,Unique identifier
+What does JOIN do?,Combine tables
+What is a foreign key?,References another table

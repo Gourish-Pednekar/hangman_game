@@ -1,0 +1,3 @@
+What is the keyword for defining a class?,class
+What is the keyword for a loop?,for
+What is the keyword for inheritance?,extends

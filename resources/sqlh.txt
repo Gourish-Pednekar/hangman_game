@@ -1,0 +1,3 @@
+What is normalization?,Database design technique
+What are ACID properties?,Transactions
+What is a subquery?,Query inside query

@@ -1,0 +1,3 @@
+What does SQL stand for?,Structured Query Language
+What is the command to create a table?,CREATE
+What is used to select data?,SELECT
