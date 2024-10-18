@@ -139,69 +139,69 @@ public class Hangman extends JFrame implements ActionListener {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
-        String command = e.getActionCommand();
-        if (command.equals("Quit")) {
-            exitGame();
-            return;
-        } else {
-            // letter buttons
+public void actionPerformed(ActionEvent e) {
+    String command = e.getActionCommand();
 
-            // disable button
-            JButton button = (JButton) e.getSource();
-            button.setEnabled(false);
+    if (command.equals("Quit")) {
+        exitGame();
+        return;
+    }
 
-            // check if the word contains the user's guess
-            if (wordChallenge[1].contains(command)) {
-                // indicate that the user got it right
-                button.setBackground(Color.GREEN);
+    // Disable the pressed button
+    JButton button = (JButton) e.getSource();
+    button.setEnabled(false);
 
-                // store the hidden word in a char array to update the hidden text
-                char[] hiddenWord = hiddenWordLabel.getText().toCharArray();
+    // Check if the guessed letter is in the word
+    if (wordChallenge[1].contains(command)) {
+        // Indicate the correct guess
+        button.setBackground(Color.GREEN);
 
-                for (int i = 0; i < wordChallenge[1].length(); i++) {
-                    // update _ to correct letter
-                    if (wordChallenge[1].charAt(i) == command.charAt(0)) {
-                        hiddenWord[i] = command.charAt(0);
-                    }
-                }
-
-                // update hiddenWordLabel
-                hiddenWordLabel.setText(String.valueOf(hiddenWord));
-                scores[currentPlayerIndex] += 100; // update score for current player
-
-                // the user guessed the word right
-                if (!hiddenWordLabel.getText().contains("*")) {
-                    // display dialog with success result
-                    resultLabel.setText("You got it right!");
-                    resultDialog.setVisible(true);
-                    correctGuesses[currentPlayerIndex]++;
-                    savePlayerDataToDatabase(playerNames[currentPlayerIndex], correctGuesses[currentPlayerIndex],
-                            incorrectGuessesArray[currentPlayerIndex], scores[currentPlayerIndex]);
-                }
-            } else {
-                // indicate that the user chose the wrong letter
-                button.setBackground(Color.RED);
-
-                // increase incorrect counter
-                ++incorrectGuesses;
-
-                // update hangman image
-                CustomTools.updateImage(hangmanImage, "resources/" + (incorrectGuesses + 1) + ".png");
-
-                // user failed to guess word right
-                if (incorrectGuesses >= 6) {
-                    // display result dialog with game over label
-                    resultLabel.setText("Too Bad, Try Again?");
-                    resultDialog.setVisible(true);
-                    incorrectGuessesArray[currentPlayerIndex]++;
-                    savePlayerDataToDatabase(playerNames[currentPlayerIndex], correctGuesses[currentPlayerIndex],
-                            incorrectGuessesArray[currentPlayerIndex], scores[currentPlayerIndex]);
-                }
+        // Update the hidden word
+        char[] hiddenWord = hiddenWordLabel.getText().toCharArray();
+        for (int i = 0; i < wordChallenge[1].length(); i++) {
+            if (wordChallenge[1].charAt(i) == command.charAt(0)) {
+                hiddenWord[i] = command.charAt(0);  // Replace the hidden asterisk with the correct letter
             }
-            wordLabel.setText("Word: " + wordChallenge[1]);
+        }
+        hiddenWordLabel.setText(String.valueOf(hiddenWord));
+        scores[currentPlayerIndex] += 100; // Update score for current player
+
+        // Increment correct guesses for this player
+        correctGuesses[currentPlayerIndex]++;
+
+        // If the user has guessed the entire word
+        if (!hiddenWordLabel.getText().contains("*")) {
+            resultLabel.setText("You got it right!");
+            resultDialog.setVisible(true);
+
+            // Save player data to database
+            savePlayerDataToDatabase(playerNames[currentPlayerIndex], correctGuesses[currentPlayerIndex], 
+                                      incorrectGuessesArray[currentPlayerIndex], scores[currentPlayerIndex]);
+        }
+    } else {
+        // Indicate the incorrect guess
+        button.setBackground(Color.RED);
+        
+        // Increase the incorrect guess counter for this player
+        incorrectGuessesArray[currentPlayerIndex]++;
+        ++incorrectGuesses;  // Overall incorrect guesses count for the current game
+        
+        // Update hangman image based on the number of incorrect guesses
+        CustomTools.updateImage(hangmanImage, "resources/" + (incorrectGuesses + 1) + ".png");
+
+        // If user has exceeded the maximum number of incorrect guesses
+        if (incorrectGuesses >= 6) {
+            resultLabel.setText("Too Bad, Try Again?");
+            resultDialog.setVisible(true);
+
+            // Save player data to database
+            savePlayerDataToDatabase(playerNames[currentPlayerIndex], correctGuesses[currentPlayerIndex], 
+                                      incorrectGuessesArray[currentPlayerIndex], scores[currentPlayerIndex]);
         }
     }
+    wordLabel.setText("Word: " + wordChallenge[1]);  // For debugging
+}
+
 
     private void createResultDialog() {
         resultDialog = new JDialog();
@@ -313,6 +313,7 @@ public class Hangman extends JFrame implements ActionListener {
         // Make the dialog visible
         scoreboardDialog.setVisible(true);
     }
+    
 
     private void resetGame() {
         incorrectGuesses = 0;
@@ -328,16 +329,25 @@ public class Hangman extends JFrame implements ActionListener {
     private void savePlayerDataToDatabase(String playerName, int correctGuesses, int incorrectGuesses, int score) {
         // Connect to database
         try (Connection conn = DriverManager.getConnection("jdbc:mariadb://localhost:3306/game", "root", "root");
-             PreparedStatement pstmt = conn.prepareStatement("INSERT INTO scoreboard (username, correct_guesses, incorrect_guesses, score) VALUES (?, ?, ?, ?)")) {
-
+             PreparedStatement pstmt = conn.prepareStatement(
+                 "INSERT INTO scoreboard (username, correct_guesses, incorrect_guesses, score) VALUES (?, ?, ?, ?) " +
+                 "ON DUPLICATE KEY UPDATE correct_guesses = ?, incorrect_guesses = ?, score = ?")) {
+    
             pstmt.setString(1, playerName);
             pstmt.setInt(2, correctGuesses);
             pstmt.setInt(3, incorrectGuesses);
             pstmt.setInt(4, score);
+    
+            // Add these for the update clause
+            pstmt.setInt(5, correctGuesses);
+            pstmt.setInt(6, incorrectGuesses);
+            pstmt.setInt(7, score);
+    
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+    
 
 }
