@@ -260,27 +260,57 @@ public class Hangman extends JFrame implements ActionListener {
     }
 
     private void showScoreboard() {
+        // Create a new JDialog for the scoreboard
         JDialog scoreboardDialog = new JDialog();
         scoreboardDialog.setTitle("Scoreboard");
-        scoreboardDialog.setSize(CommonConstants.RESULT_DIALOG_SIZE);
+        scoreboardDialog.setSize(500, 300);
         scoreboardDialog.setLocationRelativeTo(this);
-        scoreboardDialog.setResizable(false);
         scoreboardDialog.setModal(true);
-        scoreboardDialog.setLayout(new GridLayout(playerNames.length + 1, 3));
-
-        scoreboardDialog.add(new JLabel("Player"));
-        scoreboardDialog.add(new JLabel("Correct Guesses"));
-        scoreboardDialog.add(new JLabel("Scores"));
-
+        
+        // Set background to white
+        scoreboardDialog.getContentPane().setBackground(Color.BLACK);
+        
+        // Create column headers
+        String[] columns = {"Player", "Correct Guesses", "Scores"};
+        
+        // Prepare the data in a table format
+        String[][] data = new String[playerNames.length][3];
         for (int i = 0; i < playerNames.length; i++) {
-            scoreboardDialog.add(new JLabel(playerNames[i]));
-            scoreboardDialog.add(new JLabel(String.valueOf(correctGuesses[i])));
-            scoreboardDialog.add(new JLabel(String.valueOf(scores[i])));
+            data[i][0] = playerNames[i];  // Player name
+            data[i][1] = String.valueOf(correctGuesses[i]);  // Correct guesses
+            data[i][2] = String.valueOf(scores[i]);  // Scores
+            // Save each player's data to the database
+            savePlayerDataToDatabase(playerNames[i], correctGuesses[i], incorrectGuessesArray[i], scores[i]);
         }
-
+        
+        // Create a JTable to display the data
+        JTable table = new JTable(data, columns);
+        
+        // Customize table appearance
+        table.setBackground(Color.black);
+        table.setForeground(Color.white);  // Black text for better contrast
+        table.setGridColor(Color.white);  // Light grid lines
+        table.setFont(new Font("Cartoonero", Font.PLAIN, 16));  // Set font size and style
+        table.setRowHeight(30);  // Set row height for better visibility
+    
+        // Add the table to a JScrollPane in case the data overflows
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBackground(Color.WHITE);
+        
+        // Add the scroll pane to the dialog
+        scoreboardDialog.add(scrollPane, BorderLayout.CENTER);
+        
+        // Add a close button at the bottom
         JButton closeButton = new JButton("Close");
+        closeButton.setBackground(CommonConstants.SECONDARY_COLOR);  // Use secondary color for the button
+        closeButton.setForeground(Color.WHITE);
+        closeButton.setFont(new Font("Cartoonero", Font.BOLD, 14));
         closeButton.addActionListener(e -> scoreboardDialog.dispose());
-        scoreboardDialog.add(closeButton);
+        
+        // Add the close button in the dialog's south region
+        scoreboardDialog.add(closeButton, BorderLayout.SOUTH);
+        
+        // Make the dialog visible
         scoreboardDialog.setVisible(true);
     }
 
